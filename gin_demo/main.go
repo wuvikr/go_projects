@@ -1,29 +1,40 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-// /hello Handle的返回内容
-func sayHello(w http.ResponseWriter, r *http.Request) {
-	byte, err := ioutil.ReadFile("./hello.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, _ = fmt.Fprintln(w, string(byte))
+func createbook(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "create book!",
+	})
 }
 
 func main() {
-	// 创建一个路径为 /hello 的Handle
-	http.HandleFunc("/hello", sayHello)
+	e := gin.Default() // 返回默认路由引擎
 
-	// 创建一个serve
-	err := http.ListenAndServe("127.0.0.1:9090", nil)
-	if err != nil {
-		fmt.Printf("http serve failed, err: %v\n", err)
-		return
-	}
+	e.GET("/book", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{
+			"message": "get book!",
+		})
+	})
+
+	e.POST("/book", createbook)
+
+	e.PUT("/book", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "update book!",
+		})
+	})
+
+	e.DELETE("/book", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "delete book!",
+		})
+	})
+
+	// 启动服务
+	e.Run("127.0.0.1:9090")
 }
