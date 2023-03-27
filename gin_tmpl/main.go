@@ -92,12 +92,44 @@ func tem(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, name)
 }
 
+func index(w http.ResponseWriter, r *http.Request) {
+	// 解析模板
+	// 需要先加载根模板
+	t, err := template.ParseFiles("./Templates/base.tmpl", "./Templates/index.tmpl")
+
+	if err != nil {
+		fmt.Printf("Parse temlate failed, err:%v\n", err)
+	}
+
+	var name = "小王子"
+
+	// 渲染模板
+	t.ExecuteTemplate(w, "index.tmpl", name)
+}
+
+func home(w http.ResponseWriter, r *http.Request) {
+	// 解析模板
+	t, err := template.ParseFiles("./Templates/base.tmpl", "./Templates/home.tmpl")
+
+	if err != nil {
+		fmt.Printf("Parse temlate failed, err:%v\n", err)
+	}
+
+	var name = "小王子"
+
+	// 渲染模板
+	t.ExecuteTemplate(w, "home.tmpl", name)
+}
+
 func main() {
 	http.HandleFunc("/", sayHello)
 
 	http.HandleFunc("/pra", pra)
 
 	http.HandleFunc("/tem", tem)
+
+	http.HandleFunc("/index", index)
+	http.HandleFunc("/home", home)
 
 	// 启动服务
 	err := http.ListenAndServe("127.0.0.1:9090", nil)
