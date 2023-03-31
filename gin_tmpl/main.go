@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
-	"text/template"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 遇事不决 写注释
@@ -121,6 +123,34 @@ func home(w http.ResponseWriter, r *http.Request) {
 	t.ExecuteTemplate(w, "home.tmpl", name)
 }
 
+func xss(w http.ResponseWriter, r *http.Request) {
+	// 创建模板对象并添加自定义方法
+	t := template.New("xss.tmpl").Funcs(template.FuncMap{
+		"safe": func(str string) template.HTML {
+			return template.HTML(str)
+		},
+	})
+
+	// 解析模板
+	t2, err := t.ParseFiles("./Templates/xss.tmpl")
+
+	if err != nil {
+		fmt.Printf("Parse temlate failed, err:%v\n", err)
+		return
+	}
+
+	content1 := "<script>alert(123);</script>"
+	content2 := "<a href='https://www.baidu.com'>百度</a>"
+
+	// 渲染模板
+	t2.Execute(w, map[string]string{
+		"con1": content1,
+		"con2": content2,
+	})
+}
+
+/*
+// net/http包实现
 func main() {
 	http.HandleFunc("/", sayHello)
 
@@ -131,10 +161,44 @@ func main() {
 	http.HandleFunc("/index", index)
 	http.HandleFunc("/home", home)
 
+	http.HandleFunc("/xss", xss)
+
 	// 启动服务
 	err := http.ListenAndServe("127.0.0.1:9090", nil)
 	if err != nil {
 		fmt.Printf("HTTP serve start failed, err:%v", err)
 		return
 	}
+}
+*/
+
+// gin框架实现
+func main() {
+	r := gin.Default()
+
+	// 添加模板自定义函数
+	r.SetFuncMap(template.FuncMap{
+		"safe": func(str string) template.HTML {
+			return template.HTML(str)
+		},
+	})
+
+	// 模板解析
+	// r.LoadHTMLFiles("Templates/users/gin_tmp.tmpl", "Templates/users/gin_tmp.tmpl")
+	r.LoadHTMLGlob("Templates/**/*") // 使用正则表达式匹配来加载文件
+
+	r.GET("/users/index", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "users/gin_tmp.tmpl", gin.H{
+			"title": "www.index.com",
+		})
+	})
+
+	r.GET("/posts/index", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "posts/gin_tmp.tmpl", gin.H{
+			"title": "www.posts.com",
+		})
+	})
+
+	// 运行服务
+	r.Run("127.0.0.1:9090")
 }
